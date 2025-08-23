@@ -1,0 +1,7 @@
+{
+  "name": "test_kits",
+  "version": "1.0.0",
+  "provides": ["tests.kit@1.0"],
+  "requires": ["orders.service@^1.0", "printing.service@^1.0"],
+  "entry": "entry:TestKitsModule"
+}

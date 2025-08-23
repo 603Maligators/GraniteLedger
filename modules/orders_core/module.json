@@ -1,0 +1,7 @@
+{
+  "name": "orders_core",
+  "version": "1.0.0",
+  "provides": ["orders.service@1.0", "orders.models@1.0"],
+  "requires": [],
+  "entry": "entry:OrdersCoreModule"
+}
