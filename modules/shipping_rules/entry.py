@@ -100,7 +100,7 @@ class ShippingRulesModule:
             order = self.service.get(oid)
             if not order:
                 raise HTTPException(404)
-            data = order.dict()
+            data = order.model_dump()
             opts = self.shipping_options(data)[:2]
             chosen = self.choose_method(data)
             for o in opts:

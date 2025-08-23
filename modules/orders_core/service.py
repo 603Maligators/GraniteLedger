@@ -51,7 +51,7 @@ class OrderService:
         data = self.storage.load(self.module_name, f"order_{oid}")
         if not data:
             return None
-        return Order.parse_obj(data)
+        return Order.model_validate(data)
 
     # public API
     def list_orders(self) -> List[Order]:

@@ -27,27 +27,27 @@ class OrdersCoreModule:
     def setup_routes(self, app: Any):
         @app.get("/gl/orders")
         def list_orders():
-            return [o.dict() for o in self.service.list_orders()]
+            return [o.model_dump() for o in self.service.list_orders()]
 
         @app.get("/gl/orders/{oid}")
         def get_order(oid: str):
             order = self.service.get(oid)
             if not order:
                 raise HTTPException(404)
-            return order.dict()
+            return order.model_dump()
 
         @app.post("/gl/orders")
         def create_order(item: Dict[str, Any]):
-            order = Order.parse_obj(item)
+            order = Order.model_validate(item)
             self.service.create_or_update(order)
-            return order.dict()
+            return order.model_dump()
 
         @app.patch("/gl/orders/{oid}")
         def update_order(oid: str, item: Dict[str, Any]):
             order = self.service.update(oid, item)
             if not order:
                 raise HTTPException(404)
-            return order.dict()
+            return order.model_dump()
 
         @app.post("/gl/orders/{oid}/status/{status}")
         def change_status(oid: str, status: str):
@@ -57,6 +57,6 @@ class OrdersCoreModule:
                 raise HTTPException(400)
             if not order:
                 raise HTTPException(404)
-            return order.dict()
+            return order.model_dump()
 
         self.app = app
