@@ -1,0 +1,7 @@
+{
+  "name": "printing_service",
+  "version": "1.0.0",
+  "provides": ["printing.service@1.0"],
+  "requires": ["orders.service@^1.0"],
+  "entry": "entry:PrintingServiceModule"
+}

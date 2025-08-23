@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>GraniteLedger</title>
+  <link rel="stylesheet" href="/gl/ui/static/styles.css" />
+</head>
+<body>
+  <header>
+    <h1>GraniteLedger</h1>
+    <div id="toolbar">
+      <button id="refresh">Refresh</button>
+      <button id="batch-print">Batch Print Invoices</button>
+      <button id="batch-label">Batch Buy Labels</button>
+      <select id="batch-status">
+        <option value="">Batch Status...</option>
+        <option>Printed</option>
+        <option>Addressed</option>
+        <option>Bags Pulled</option>
+        <option>Ship Method Chosen</option>
+        <option>Shipped</option>
+        <option>Completed</option>
+      </select>
+    </div>
+  </header>
+  <main id="board"></main>
+  <aside id="logdrawer" class="hidden">
+    <h3>Event Log</h3>
+    <input id="logfilter" placeholder="filter" />
+    <div id="logs"></div>
+  </aside>
+  <script src="/gl/ui/static/app.js"></script>
+</body>
+</html>

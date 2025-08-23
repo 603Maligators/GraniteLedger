@@ -1,0 +1,7 @@
+{
+  "name": "volusion_webhook",
+  "version": "1.0.0",
+  "provides": ["webhooks.volusion@1.0"],
+  "requires": ["orders.service@^1.0"],
+  "entry": "entry:VolusionWebhookModule"
+}
