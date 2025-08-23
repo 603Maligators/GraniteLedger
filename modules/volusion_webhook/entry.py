@@ -31,7 +31,7 @@ class VolusionWebhookModule:
 
     def ingest_payload(self, item: Dict[str, Any]):
         data = normalize(item)
-        order = self.OrderModel.parse_obj(data)
+        order = self.OrderModel.model_validate(data)
         self.service.create_or_update(order, test=item.get("test") == True)
         return {"status": "ok", "id": order.id}
 

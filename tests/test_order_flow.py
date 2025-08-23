@@ -29,7 +29,7 @@ def test_full_flow(orders, order_model, printing, events, runtime):
     # print label
     printing.op_print_label("x1")
     orders.change_status("x1", "Completed")
-    data = orders.get("x1").dict()
+    data = orders.get("x1").model_dump()
     assert data["status"] == "Completed"
     assert data["tracking_number"] is not None
     topics = [e["topic"] for e in events.list_events()]

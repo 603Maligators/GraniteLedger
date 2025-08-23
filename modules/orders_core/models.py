@@ -58,6 +58,3 @@ class Order(BaseModel):
     tracking_number: Optional[str] = None
     totals: MoneyTotals
     history: List[HistoryEntry] = Field(default_factory=list)
-
-    class Config:
-        json_encoders = {datetime: lambda v: v.isoformat()}
