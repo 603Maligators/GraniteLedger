@@ -1,0 +1,7 @@
+{
+  "name": "status_dashboard",
+  "version": "1.0.0",
+  "provides": ["ui.dashboard@1.0"],
+  "requires": ["orders.service@^1.0", "shipping.rules@^1.0", "printing.service@^1.0", "events.log@^1.0"],
+  "entry": "entry:DashboardModule"
+}

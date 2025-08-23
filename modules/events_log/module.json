@@ -1,0 +1,7 @@
+{
+  "name": "events_log",
+  "version": "1.0.0",
+  "provides": ["events.log@1.0"],
+  "requires": [],
+  "entry": "entry:EventsLogModule"
+}
