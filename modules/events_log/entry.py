@@ -46,5 +46,10 @@ class EventsLogModule:
 
     def setup_routes(self, app: Any):
         @app.get("/gl/logs")
-        def get_logs():
-            return self.list_events()
+        def get_logs(topic: str | None = None, order_id: str | None = None):
+            events = self.list_events()
+            if topic:
+                events = [e for e in events if e.get("topic") == topic]
+            if order_id:
+                events = [e for e in events if e.get("order_id") == order_id]
+            return events
