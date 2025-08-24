@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any
 from forgecore.admin_api import HTTPException
 
@@ -34,7 +34,8 @@ class EventsLogModule:
 
     def _handle(self, topic: str, payload: Any):
         rec = {
-            "ts": datetime.utcnow().isoformat(),
+            # store timestamps with explicit UTC zone so comparisons are safe
+            "ts": datetime.now(timezone.utc).isoformat(),
             "topic": topic,
             "order_id": payload.get("order_id"),
             "detail": payload.get("detail"),
@@ -65,11 +66,16 @@ class EventsLogModule:
                     since_dt = datetime.fromisoformat(since)
                 except ValueError:
                     raise HTTPException(400, "invalid since timestamp")
-                events = [
-                    e
-                    for e in events
-                    if datetime.fromisoformat(e["ts"]) >= since_dt
-                ]
+                if since_dt.tzinfo is None:
+                    since_dt = since_dt.replace(tzinfo=timezone.utc)
+
+                def parse_ts(ts: str) -> datetime:
+                    dt = datetime.fromisoformat(ts)
+                    if dt.tzinfo is None:
+                        dt = dt.replace(tzinfo=timezone.utc)
+                    return dt
+
+                events = [e for e in events if parse_ts(e["ts"]) >= since_dt]
             if q:
                 events = [
                     e

@@ -1,5 +1,6 @@
 from typing import Any, Dict
 from forgecore.admin_api import HTTPException
+from pydantic import ValidationError
 try:
     from fastapi import FastAPI
 except ModuleNotFoundError:  # pragma: no cover
@@ -38,7 +39,10 @@ class OrdersCoreModule:
 
         @app.post("/gl/orders")
         def create_order(item: Dict[str, Any]):
-            order = Order.parse_obj(item)
+            try:
+                order = Order.parse_obj(item)
+            except ValidationError:
+                raise HTTPException(422)
             self.service.create_or_update(order)
             return order.dict()
 

@@ -18,8 +18,8 @@ class Destination(BaseModel):
 class Item(BaseModel):
     sku: str
     name: str
-    qty: int = 1
-    weight: float
+    qty: int = Field(default=1, ge=1)
+    weight: float = Field(..., ge=0)
 
 
 class MoneyTotals(BaseModel):

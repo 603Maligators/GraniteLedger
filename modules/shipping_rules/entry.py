@@ -122,14 +122,16 @@ class ShippingRulesModule:
             method = order.proposed_shipping_method
             if not method:
                 raise HTTPException(400)
+            rationale = (
+                method.get("rationale") if isinstance(method, dict) else method.rationale
+            )
             self.service.update(oid, {"approved_shipping_method": method})
             self.ctx.event_bus.publish(
                 "order.shipping.approved",
-                {
-                    "order_id": oid,
-                    "method": method,
-                    "rationale": method.get("rationale"),
-                },
+                {"order_id": oid, "method": method, "rationale": rationale},
             )
-            self.service.change_status(oid, "Ship Method Chosen")
+            try:
+                self.service.change_status(oid, "Ship Method Chosen")
+            except ValueError:
+                raise HTTPException(409)
             return method
