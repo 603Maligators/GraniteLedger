@@ -1,6 +1,13 @@
-from datetime import datetime
-from typing import List, Optional, Dict
+from __future__ import annotations
+from typing import List, Optional, Literal
 from pydantic import BaseModel, Field
+from datetime import datetime
+
+ShippingTier = Literal["Free", "Priority", "HomeDelivery"]
+OrderStatus = Literal[
+    "New", "Printed", "Addressed", "Bags Pulled",
+    "Ship Method Chosen", "Shipped", "Completed"
+]
 
 
 class Buyer(BaseModel):
@@ -12,21 +19,14 @@ class Destination(BaseModel):
     zip: str
     city: str
     state: str
-    country: str
+    country: str = "US"
 
 
 class Item(BaseModel):
     sku: str
     name: str
     qty: int = 1
-    weight: float
-
-
-class MoneyTotals(BaseModel):
-    subtotal: float
-    shipping: float
-    tax: float
-    grand_total: float
+    weight: float = 0.0  # pounds per-unit
 
 
 class ShipMethod(BaseModel):
@@ -34,27 +34,42 @@ class ShipMethod(BaseModel):
     service: str
     cost: float
     eta_days: int
-    rationale: Optional[str] = None
+    rationale: str
+
+
+class MoneyTotals(BaseModel):
+    subtotal: float = 0.0
+    shipping: float = 0.0
+    tax: float = 0.0
+    grand_total: float = 0.0
 
 
 class HistoryEntry(BaseModel):
-    ts: datetime
+    ts: datetime = Field(default_factory=datetime.utcnow)
     event: str
-    detail: str
+    detail: str = ""
 
 
 class Order(BaseModel):
     id: str
     external_id: Optional[str] = None
-    created_at: datetime
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+
     buyer: Buyer
     destination: Destination
-    items: List[Item]
-    shipping_tier: str
+    items: List[Item] = Field(default_factory=list)
+
+    shipping_tier: ShippingTier = "Free"
     computed_weight: float = 0.0
-    status: str = "New"
+
+    status: OrderStatus = "New"
+
     proposed_shipping_method: Optional[ShipMethod] = None
     approved_shipping_method: Optional[ShipMethod] = None
     tracking_number: Optional[str] = None
-    totals: MoneyTotals
+
+    totals: MoneyTotals = Field(default_factory=MoneyTotals)
     history: List[HistoryEntry] = Field(default_factory=list)
+
+    test_flag: bool = False
+

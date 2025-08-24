@@ -1,0 +1,70 @@
+body {
+  font-family: sans-serif;
+  margin: 0;
+  padding: 10px;
+}
+
+#toolbar {
+  margin-bottom: 10px;
+}
+
+.row {
+  display: flex;
+  overflow-x: auto;
+}
+
+.column {
+  flex: 1;
+  padding: 0 10px;
+  min-width: 180px;
+}
+
+.cards {
+  min-height: 100px;
+}
+
+.card {
+  background: #f0f0f0;
+  margin: 4px;
+  padding: 4px;
+  border-radius: 4px;
+}
+
+.card button {
+  margin-left: 4px;
+}
+
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal.hidden {
+  display: none;
+}
+
+.modal-content {
+  background: #fff;
+  padding: 20px;
+  border-radius: 4px;
+}
+
+.log-drawer {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  max-height: 150px;
+  overflow: auto;
+  background: #eee;
+  padding: 4px;
+  font-size: 12px;
+}
+

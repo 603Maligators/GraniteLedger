@@ -1,6 +1,7 @@
 from typing import Any, Dict, List
 from datetime import datetime
 from forgecore.admin_api import HTTPException
+from modules.orders_core.models import ShipMethod
 
 try:
     from fastapi import FastAPI
@@ -35,29 +36,35 @@ class ShippingRulesModule:
             {"carrier": "Home", "service": "Delivery", "cost": 7.0, "eta_days": 4},
         ]
 
-    def choose_method(self, order: Dict) -> Dict:
+    def choose_method(self, order: Dict) -> ShipMethod:
         zip_code = order["destination"]["zip"]
         tier = order.get("shipping_tier")
         options = self.shipping_options(order)
         # ZIP override
         if zip_code == "03224":
-            return {"carrier": "Home", "service": "Delivery", "cost": 7.0, "eta_days": 4, "rationale": "zip override"}
+            return ShipMethod.model_validate({
+                "carrier": "Home",
+                "service": "Delivery",
+                "cost": 7.0,
+                "eta_days": 4,
+                "rationale": "zip override",
+            })
         if tier == "Priority":
             if zip_code == "03224":
-                return {
+                return ShipMethod.model_validate({
                     "carrier": "Home",
                     "service": "Delivery",
                     "cost": 7.0,
                     "eta_days": 4,
                     "rationale": "priority zip override",
-                }
-            return {
+                })
+            return ShipMethod.model_validate({
                 "carrier": "USPS",
                 "service": "Priority",
                 "cost": 8.0,
                 "eta_days": 2,
                 "rationale": "priority",
-            }
+            })
         if tier == "Free":
             opts = sorted(options[:2], key=lambda o: o["cost"])
             cheapest = opts[0]
@@ -70,9 +77,15 @@ class ShippingRulesModule:
                 rationale = "cheapest"
             chosen = dict(chosen)
             chosen["rationale"] = rationale
-            return chosen
+            return ShipMethod.model_validate(chosen)
         # default
-        return {"carrier": "Home", "service": "Delivery", "cost": 7.0, "eta_days": 4, "rationale": "default"}
+        return ShipMethod.model_validate({
+            "carrier": "Home",
+            "service": "Delivery",
+            "cost": 7.0,
+            "eta_days": 4,
+            "rationale": "default",
+        })
 
     def handle(self, payload: Dict):
         order = payload.get("order")
@@ -84,13 +97,13 @@ class ShippingRulesModule:
         changed = {}
         if order.get("computed_weight") != weight:
             changed["computed_weight"] = weight
-        if order.get("proposed_shipping_method") != method:
+        if order.get("proposed_shipping_method") != method.model_dump(mode="python"):
             changed["proposed_shipping_method"] = method
         if changed:
             self.service.update(oid, changed)
             self.ctx.event_bus.publish(
                 "order.shipping.selected",
-                {"order_id": oid, "method": method},
+                {"order_id": oid, "method": method.model_dump(mode="json")},
             )
 
     # routes -------------------------------------------------------------
@@ -104,8 +117,8 @@ class ShippingRulesModule:
             opts = self.shipping_options(data)[:2]
             chosen = self.choose_method(data)
             for o in opts:
-                if o["carrier"] == chosen.get("carrier") and o["service"] == chosen.get("service"):
-                    o["rationale"] = chosen.get("rationale")
+                if o["carrier"] == chosen.carrier and o["service"] == chosen.service:
+                    o["rationale"] = chosen.rationale
                 else:
                     o["rationale"] = ""
             return opts
@@ -120,7 +133,7 @@ class ShippingRulesModule:
                 raise HTTPException(400)
             self.service.update(oid, {"approved_shipping_method": method})
             self.ctx.event_bus.publish(
-                "order.shipping.approved", {"order_id": oid, "method": method}
+                "order.shipping.approved", {"order_id": oid, "method": method.model_dump(mode="json")}
             )
             self.service.change_status(oid, "Ship Method Chosen")
             return method
