@@ -1,3 +1,9 @@
+import os
+import sys
+
+BASE = os.path.dirname(__file__)
+sys.path.insert(0, os.path.join(BASE, "ForgeCore"))
+
 from forgecore.runtime import create_runtime
 from forgecore.admin_api import create_app
 
