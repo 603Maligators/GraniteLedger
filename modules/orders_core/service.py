@@ -3,7 +3,7 @@ from datetime import datetime, UTC
 from typing import Dict, List, Optional
 import os, sys
 sys.path.append(os.path.dirname(__file__))
-from models import Order
+from models import Order, HistoryEntry, ShipMethod
 
 
 ALLOWED_STATUS = [
@@ -70,11 +70,13 @@ class OrderService:
                 order.history = existing.history
         else:
             self.external[order.external_id] = order.id if order.external_id else order.id
-        order.history.append({
-            "ts": datetime.now(UTC),
-            "event": "order.received",
-            "detail": "test" if test else "received",
-        })
+        order.history.append(
+            HistoryEntry(
+                ts=datetime.now(UTC),
+                event="order.received",
+                detail="test" if test else "received",
+            )
+        )
         self._store_order(order)
         payload = {"order_id": order.id, "order": order.model_dump(mode="json"), "test": test}
         self.event_bus.publish("order.received", payload)
@@ -85,12 +87,16 @@ class OrderService:
         if not order:
             return None
         for k, v in data.items():
+            if k in {"proposed_shipping_method", "approved_shipping_method"} and isinstance(v, dict):
+                v = ShipMethod.model_validate(v)
             setattr(order, k, v)
-        order.history.append({
-            "ts": datetime.now(UTC),
-            "event": "order.updated",
-            "detail": "updated",
-        })
+        order.history.append(
+            HistoryEntry(
+                ts=datetime.now(UTC),
+                event="order.updated",
+                detail="updated",
+            )
+        )
         self._store_order(order)
         self.event_bus.publish("order.updated", {"order_id": oid, "order": order.model_dump(mode="json")})
         return order
@@ -104,11 +110,13 @@ class OrderService:
         if new_status not in STATUS_FLOW.get(order.status, []):
             raise ValueError("illegal transition")
         order.status = new_status
-        order.history.append({
-            "ts": datetime.now(UTC),
-            "event": "order.status.changed",
-            "detail": new_status,
-        })
+        order.history.append(
+            HistoryEntry(
+                ts=datetime.now(UTC),
+                event="order.status.changed",
+                detail=new_status,
+            )
+        )
         self._store_order(order)
         self.event_bus.publish("order.status.changed", {"order_id": oid, "status": new_status})
         if new_status == "Completed":
