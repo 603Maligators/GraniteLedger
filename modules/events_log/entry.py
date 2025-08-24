@@ -1,5 +1,6 @@
 from datetime import datetime, UTC
 from typing import Any
+import json
 from forgecore.admin_api import HTTPException
 
 try:
@@ -46,10 +47,24 @@ class EventsLogModule:
 
     def setup_routes(self, app: Any):
         @app.get("/gl/logs")
-        def get_logs(topic: str | None = None, order_id: str | None = None):
+        def get_logs(
+            topic: str | None = None,
+            order_id: str | None = None,
+            q: str | None = None,
+            since: str | None = None,
+        ):
             events = self.list_events()
             if topic:
                 events = [e for e in events if e.get("topic") == topic]
             if order_id:
                 events = [e for e in events if e.get("order_id") == order_id]
+            if q:
+                ql = q.lower()
+                events = [e for e in events if ql in json.dumps(e).lower()]
+            if since:
+                try:
+                    since_dt = datetime.fromisoformat(since)
+                    events = [e for e in events if datetime.fromisoformat(e["ts"]) >= since_dt]
+                except ValueError:
+                    pass
             return events

@@ -1,4 +1,4 @@
-from typing import Any, Dict
+from typing import Any, Dict, List
 from forgecore.admin_api import HTTPException
 try:
     from fastapi import FastAPI
@@ -58,5 +58,36 @@ class OrdersCoreModule:
             if not order:
                 raise HTTPException(404)
             return order.model_dump()
+
+        @app.post("/gl/orders/{oid}/addressed")
+        def mark_addressed(oid: str):
+            try:
+                order = self.service.change_status(oid, "Addressed")
+            except ValueError:
+                raise HTTPException(400)
+            if not order:
+                raise HTTPException(404)
+            return order.model_dump()
+
+        @app.post("/gl/orders/batch/print/invoices")
+        def batch_print_invoices(ids: List[str]):
+            printing = self.ctx.registry.get("printing.service@1.0")
+            return [printing.op_print_invoice(i) for i in ids]
+
+        @app.post("/gl/orders/batch/print/labels")
+        def batch_print_labels(ids: List[str]):
+            printing = self.ctx.registry.get("printing.service@1.0")
+            return [printing.op_print_label(i) for i in ids]
+
+        @app.post("/gl/orders/batch/status/{status}")
+        def batch_status(status: str, ids: List[str]):
+            out = []
+            for oid in ids:
+                try:
+                    order = self.service.change_status(oid, status)
+                except ValueError:
+                    order = None
+                out.append(order.model_dump() if order else None)
+            return out
 
         self.app = app
