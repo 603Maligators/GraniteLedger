@@ -2,6 +2,7 @@ import os
 from datetime import datetime
 from typing import Any
 from forgecore.admin_api import HTTPException
+import hashlib
 
 try:
     from fastapi import FastAPI
@@ -24,10 +25,19 @@ class PrintingServiceModule:
         ts = datetime.utcnow().strftime("%Y%m%d%H%M%S")
         path = os.path.join(base, kind, oid)
         os.makedirs(path, exist_ok=True)
-        file_path = os.path.join(path, f"{ts}.txt")
-        with open(file_path, "w", encoding="utf-8") as fh:
+        html_path = os.path.join(path, f"{ts}.html")
+        txt_path = os.path.join(path, f"{ts}.txt")
+        html = f"<html><body><pre>{content}</pre></body></html>"
+        with open(html_path, "w", encoding="utf-8") as fh:
+            fh.write(html)
+        with open(txt_path, "w", encoding="utf-8") as fh:
             fh.write(content)
-        return file_path
+        return html_path
+
+    def _tracking(self, oid: str) -> str:
+        ts = datetime.utcnow().isoformat()
+        digest = hashlib.sha1(f"{oid}-{ts}".encode()).hexdigest()[:8]
+        return f"GL-{oid}-{digest}"
 
     # core operations ---------------------------------------------------
     def op_print_invoice(self, oid: str, test: bool = False):
@@ -36,7 +46,8 @@ class PrintingServiceModule:
             raise HTTPException(404)
         path = self._write_file("invoices", oid, f"Invoice for {oid}")
         self.ctx.event_bus.publish("order.invoice.printed", {"order_id": oid, "detail": path, "test": test})
-        self.service.change_status(oid, "Printed")
+        if order.status == "New":
+            self.service.change_status(oid, "Printed")
         return {"path": path}
 
     def op_print_label(self, oid: str, test: bool = False):
@@ -45,7 +56,7 @@ class PrintingServiceModule:
             raise HTTPException(404)
         if not order.approved_shipping_method:
             raise HTTPException(400)
-        tracking = f"TRK{int(datetime.utcnow().timestamp())}"
+        tracking = self._tracking(oid)
         path = self._write_file("labels", oid, f"Label {tracking}")
         self.service.update(oid, {"tracking_number": tracking})
         self.ctx.event_bus.publish("order.label.purchased", {"order_id": oid, "detail": tracking, "test": test})
@@ -71,7 +82,7 @@ class PrintingServiceModule:
         if not order or not order.tracking_number:
             raise HTTPException(404)
         self.ctx.event_bus.publish("order.label.voided", {"order_id": oid, "detail": order.tracking_number, "test": test})
-        tracking = f"TRK{int(datetime.utcnow().timestamp())}R"
+        tracking = self._tracking(oid)
         path = self._write_file("labels", oid, f"Label {tracking}")
         self.service.update(oid, {"tracking_number": tracking})
         self.ctx.event_bus.publish("order.label.purchased", {"order_id": oid, "detail": tracking, "test": test})

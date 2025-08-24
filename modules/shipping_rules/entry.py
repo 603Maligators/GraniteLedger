@@ -1,6 +1,8 @@
 from typing import Any, Dict, List
 from datetime import datetime
 from forgecore.admin_api import HTTPException
+import hashlib
+import random
 
 try:
     from fastapi import FastAPI
@@ -27,52 +29,63 @@ class ShippingRulesModule:
         return round(total + 0.5, 2)
 
     def shipping_options(self, order: Dict) -> List[Dict]:
-        # deterministic stub options
-        return [
-            {"carrier": "USPS", "service": "Ground", "cost": 5.0, "eta_days": 5},
-            {"carrier": "UPS", "service": "Ground", "cost": 5.2, "eta_days": 3},
-            {"carrier": "USPS", "service": "Priority", "cost": 8.0, "eta_days": 2},
-            {"carrier": "Home", "service": "Delivery", "cost": 7.0, "eta_days": 4},
-        ]
+        zip_code = order["destination"]["zip"]
+        weight = order.get("computed_weight") or self.compute_weight(order)
+        seed = int(hashlib.sha1(f"{zip_code}-{round(weight,1)}".encode()).hexdigest(), 16)
+        rng = random.Random(seed)
+        opts = []
+        # base options: USPS Ground, UPS Ground, USPS Priority
+        cost1 = round(5.0 + rng.uniform(0, 0.05), 2)
+        cost2 = round(5.1 + rng.uniform(0, 0.05), 2)
+        cost3 = round(7.8 + rng.uniform(0, 0.05), 2)
+        opts.append({"carrier": "USPS", "service": "Ground", "cost": cost1, "eta_days": 5})
+        opts.append({"carrier": "UPS", "service": "Ground", "cost": cost2, "eta_days": 4})
+        opts.append({"carrier": "USPS", "service": "Priority", "cost": cost3, "eta_days": 2})
+        opts.append({"carrier": "Home", "service": "Delivery", "cost": 7.0, "eta_days": 3})
+        return opts
 
     def choose_method(self, order: Dict) -> Dict:
         zip_code = order["destination"]["zip"]
         tier = order.get("shipping_tier")
         options = self.shipping_options(order)
-        # ZIP override
+        # ZIP override always forces Home Delivery
         if zip_code == "03224":
-            return {"carrier": "Home", "service": "Delivery", "cost": 7.0, "eta_days": 4, "rationale": "zip override"}
+            return {
+                "carrier": "Home",
+                "service": "Delivery",
+                "cost": 7.0,
+                "eta_days": 3,
+                "rationale": "ZIP 03224 requires Home Delivery",
+            }
         if tier == "Priority":
-            if zip_code == "03224":
-                return {
-                    "carrier": "Home",
-                    "service": "Delivery",
-                    "cost": 7.0,
-                    "eta_days": 4,
-                    "rationale": "priority zip override",
-                }
             return {
                 "carrier": "USPS",
                 "service": "Priority",
-                "cost": 8.0,
+                "cost": next(o["cost"] for o in options if o["service"] == "Priority"),
                 "eta_days": 2,
-                "rationale": "priority",
+                "rationale": "Customer paid for Priority",
             }
         if tier == "Free":
-            opts = sorted(options[:2], key=lambda o: o["cost"])
-            cheapest = opts[0]
-            candidate = opts[1]
-            if candidate["cost"] - cheapest["cost"] < 0.3 and candidate["eta_days"] < cheapest["eta_days"]:
-                chosen = candidate
-                rationale = "faster within $0.30"
+            ground = options[:2]
+            ground.sort(key=lambda o: o["cost"])
+            cheapest, candidate = ground
+            diff = round(candidate["cost"] - cheapest["cost"], 2)
+            eta_diff = cheapest["eta_days"] - candidate["eta_days"]
+            if diff < 0.3 and eta_diff > 0:
+                chosen = dict(candidate)
+                chosen["rationale"] = f"${diff:.2f} more and {eta_diff} day sooner"
             else:
-                chosen = cheapest
-                rationale = "cheapest"
-            chosen = dict(chosen)
-            chosen["rationale"] = rationale
+                chosen = dict(cheapest)
+                chosen["rationale"] = "Cheapest overall"
             return chosen
         # default
-        return {"carrier": "Home", "service": "Delivery", "cost": 7.0, "eta_days": 4, "rationale": "default"}
+        return {
+            "carrier": "Home",
+            "service": "Delivery",
+            "cost": 7.0,
+            "eta_days": 3,
+            "rationale": "Default rule",
+        }
 
     def handle(self, payload: Dict):
         order = payload.get("order")
@@ -90,7 +103,11 @@ class ShippingRulesModule:
             self.service.update(oid, changed)
             self.ctx.event_bus.publish(
                 "order.shipping.selected",
-                {"order_id": oid, "method": method},
+                {
+                    "order_id": oid,
+                    "detail": f"{method['carrier']} {method['service']}",
+                    "rationale": method.get("rationale"),
+                },
             )
 
     # routes -------------------------------------------------------------
@@ -100,7 +117,7 @@ class ShippingRulesModule:
             order = self.service.get(oid)
             if not order:
                 raise HTTPException(404)
-            data = order.dict()
+            data = order.model_dump()
             opts = self.shipping_options(data)[:2]
             chosen = self.choose_method(data)
             for o in opts:

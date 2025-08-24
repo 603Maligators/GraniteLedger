@@ -18,6 +18,10 @@ EVENT_TOPICS = [
     "order.label.printed",
     "order.label.voided",
     "order.completed",
+    "addressbook.added",
+    "volusion.sync",
+    "volusion.sync.skipped",
+    "volusion.sync.error",
 ]
 
 
@@ -36,6 +40,7 @@ class EventsLogModule:
             "topic": topic,
             "order_id": payload.get("order_id"),
             "detail": payload.get("detail"),
+            "rationale": payload.get("rationale"),
             "test": payload.get("test", False),
         }
         self.events.append(rec)
@@ -46,10 +51,24 @@ class EventsLogModule:
 
     def setup_routes(self, app: Any):
         @app.get("/gl/logs")
-        def get_logs(topic: str | None = None, order_id: str | None = None):
+        def get_logs(topic: str | None = None, order_id: str | None = None, q: str | None = None, since: str | None = None):
             events = self.list_events()
             if topic:
-                events = [e for e in events if e.get("topic") == topic]
+                events = [e for e in events if e.get("topic", "").startswith(topic)]
             if order_id:
                 events = [e for e in events if e.get("order_id") == order_id]
+            if q:
+                events = [
+                    e
+                    for e in events
+                    if q.lower() in str(e.get("detail", "")).lower()
+                    or q.lower() in str(e.get("rationale", "")).lower()
+                ]
+            if since:
+                try:
+                    cutoff = datetime.fromisoformat(since)
+                    events = [e for e in events if datetime.fromisoformat(e["ts"]) > cutoff]
+                except ValueError:
+                    raise HTTPException(400)
+            events.sort(key=lambda e: e["ts"], reverse=True)
             return events

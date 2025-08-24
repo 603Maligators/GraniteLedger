@@ -49,6 +49,10 @@ class TestKitsModule:
             if not orders:
                 raise HTTPException(404)
             oid = orders[-1].id
-            self.orders.update(oid, {"approved_shipping_method": {"carrier": "USPS", "service": "Ground", "cost": 5.0, "eta_days": 5}})
+            order = self.orders.get(oid)
+            method = order.proposed_shipping_method
+            self.orders.update(oid, {"approved_shipping_method": method})
+            self.ctx.event_bus.publish("order.shipping.approved", {"order_id": oid, "method": method, "test": True})
+            self.orders.change_status(oid, "Ship Method Chosen")
             self.printing.op_print_label(oid, test=True)
             return {"id": oid}

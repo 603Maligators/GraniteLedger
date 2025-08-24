@@ -1,11 +1,12 @@
 import shutil
-import os
+import os, shutil
 import pytest
 import sys
 BASE = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 sys.path.append(BASE)
 sys.path.append(os.path.join(BASE, "ForgeCore"))
 
+from mini_fastapi import FastAPI
 from forgecore.runtime import create_runtime
 
 
@@ -14,6 +15,11 @@ def runtime():
     shutil.rmtree("modules/_storage", ignore_errors=True)
     rt = create_runtime("modules")
     rt.start()
+    app = FastAPI()
+    for state in rt.loader.modules.values():
+        if hasattr(state.instance, "setup_routes"):
+            state.instance.setup_routes(app)
+    rt.app = app
     yield rt
     shutil.rmtree("modules/_storage", ignore_errors=True)
 

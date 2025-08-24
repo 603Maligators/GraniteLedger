@@ -1,5 +1,40 @@
-<!DOCTYPE html>
-<html><body>
-<h1>GraniteLedger Dashboard</h1>
-<p>Minimal placeholder UI.</p>
-</body></html>
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>GraniteLedger Dashboard</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div id="toolbar">
+    <button id="refresh">Refresh</button>
+    <button id="batch-invoices">Batch Print Invoices</button>
+    <button id="batch-labels">Batch Buy Labels</button>
+    <select id="batch-status-select">
+      <option value="Printed">Printed</option>
+      <option value="Addressed">Addressed</option>
+      <option value="Bags Pulled">Bags Pulled</option>
+      <option value="Ship Method Chosen">Ship Method Chosen</option>
+      <option value="Shipped">Shipped</option>
+      <option value="Completed">Completed</option>
+    </select>
+    <button id="batch-status">Batch Status Advance</button>
+    <button id="toggle-logs">Logs</button>
+  </div>
+  <div id="board"></div>
+  <div id="logDrawer" class="hidden">
+    <h3>Event Log</h3>
+    <div id="logs"></div>
+  </div>
+  <div id="shippingModal" class="hidden">
+    <div class="modal">
+      <h3>Approve Shipping</h3>
+      <div id="shippingOptions"></div>
+      <button id="approveShipBtn">Approve</button>
+      <button id="closeShip">Cancel</button>
+    </div>
+  </div>
+  <div id="cheatsheet">P: invoice &nbsp;A: addressed &nbsp;B: bags &nbsp;M: approve &nbsp;L: label &nbsp;C: complete</div>
+  <script src="app.js"></script>
+</body>
+</html>

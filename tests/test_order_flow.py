@@ -1,10 +1,9 @@
 from datetime import datetime
 
 
-def make_order(id):
+def order_payload(id):
     return {
         "id": id,
-        "external_id": id,
         "created_at": datetime.utcnow(),
         "buyer": {"name": "Flow"},
         "destination": {"zip": "99999", "city": "X", "state": "Y", "country": "US"},
@@ -14,24 +13,32 @@ def make_order(id):
     }
 
 
-def test_full_flow(orders, order_model, printing, events, runtime):
-    order = order_model(**make_order("x1"))
-    orders.create_or_update(order)
+def test_happy_flow(runtime, volusion, events):
+    volusion.ingest_payload(order_payload("o1"))
     # print invoice
-    printing.op_print_invoice("x1")
-    orders.change_status("x1", "Addressed")
-    orders.change_status("x1", "Bags Pulled")
-    # approve shipping
-    method = orders.get("x1").proposed_shipping_method
-    orders.update("x1", {"approved_shipping_method": method})
-    runtime.event_bus.publish("order.shipping.approved", {"order_id": "x1", "method": method})
-    orders.change_status("x1", "Ship Method Chosen")
-    # print label
-    printing.op_print_label("x1")
-    orders.change_status("x1", "Completed")
-    data = orders.get("x1").dict()
-    assert data["status"] == "Completed"
-    assert data["tracking_number"] is not None
+    runtime.app.handle("POST", "/gl/orders/o1/print/invoice")
+    runtime.app.handle("POST", "/gl/orders/o1/addressed")
+    orders = runtime.registry.get("orders.service@1.0")
+    orders.change_status("o1", "Bags Pulled")
+    runtime.app.handle("POST", "/gl/orders/o1/shipping/approve")
+    runtime.app.handle("POST", "/gl/orders/o1/print/label")
+    orders.change_status("o1", "Completed")
+    order = runtime.registry.get("orders.service@1.0").get("o1").model_dump()
+    assert order["status"] == "Completed"
+    assert order["approved_shipping_method"] is not None
+    assert order["tracking_number"].startswith("GL-o1-")
     topics = [e["topic"] for e in events.list_events()]
-    for t in ["order.received", "order.invoice.printed", "order.label.printed", "order.completed"]:
-        assert t in topics
+    expected = [
+        "order.received",
+        "order.shipping.selected",
+        "order.invoice.printed",
+        "addressbook.added",
+        "order.shipping.approved",
+        "order.label.purchased",
+        "order.label.printed",
+        "order.completed",
+    ]
+    pos = 0
+    for t in expected:
+        assert t in topics[pos:]
+        pos = topics.index(t, pos) + 1

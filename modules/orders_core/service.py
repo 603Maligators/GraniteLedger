@@ -51,7 +51,16 @@ class OrderService:
         data = self.storage.load(self.module_name, f"order_{oid}")
         if not data:
             return None
-        return Order.parse_obj(data)
+        return Order.model_validate(data)
+
+    def add_history(self, oid: str, event: str, detail: str) -> Optional[Order]:
+        """Append a history entry to the order and persist it."""
+        order = self._load_order(oid)
+        if not order:
+            return None
+        order.history.append({"ts": datetime.utcnow(), "event": event, "detail": detail})
+        self._store_order(order)
+        return order
 
     # public API
     def list_orders(self) -> List[Order]:

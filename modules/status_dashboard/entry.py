@@ -19,3 +19,9 @@ class DashboardModule:
             path = os.path.join(self.ctx.module_path, "static", "index.html")
             with open(path, "r", encoding="utf-8") as fh:
                 return fh.read()
+
+        @app.get("/gl/ui/{path}")
+        def assets(path: str):
+            file_path = os.path.join(self.ctx.module_path, "static", path)
+            with open(file_path, "r", encoding="utf-8") as fh:
+                return fh.read()
