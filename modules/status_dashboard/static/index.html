@@ -1,5 +1,47 @@
-<!DOCTYPE html>
-<html><body>
-<h1>GraniteLedger Dashboard</h1>
-<p>Minimal placeholder UI.</p>
-</body></html>
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Granite Ledger Dashboard</title>
+  <link rel="stylesheet" href="/gl/ui/static/styles.css">
+</head>
+<body>
+  <header>
+    <h1>Granite Ledger</h1>
+    <div id="batch-toolbar">
+      <button id="batch-print-invoices">Batch Print Invoices</button>
+      <button id="batch-print-labels">Batch Buy/Print Labels</button>
+      <select id="batch-status">
+        <option value="">Advance Status...</option>
+        <option value="Printed">Printed</option>
+        <option value="Addressed">Addressed</option>
+        <option value="Bags Pulled">Bags Pulled</option>
+        <option value="Ship Method Chosen">Ship Method Chosen</option>
+        <option value="Shipped">Shipped</option>
+        <option value="Completed">Completed</option>
+      </select>
+      <button id="batch-advance">Go</button>
+      <button id="refresh">Refresh</button>
+      <button id="toggle-logs">Logs</button>
+    </div>
+  </header>
+  <div id="cheatsheet">
+    Shortcuts: P invoice, A addressed, B bags, M approve, L label, C complete
+  </div>
+  <main id="board"></main>
+  <div id="log-drawer" class="drawer hidden">
+    <div id="log-header">Logs <button id="close-log">×</button></div>
+    <ul id="log-list"></ul>
+  </div>
+  <div id="toast"></div>
+  <div id="shipping-modal" class="hidden">
+    <div class="modal-content">
+      <h3>Approve Shipping</h3>
+      <div id="shipping-options"></div>
+      <button id="approve-shipping">Approve</button>
+      <button id="cancel-shipping">Cancel</button>
+    </div>
+  </div>
+  <script src="/gl/ui/static/app.js"></script>
+</body>
+</html>

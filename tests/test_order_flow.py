@@ -1,11 +1,11 @@
-from datetime import datetime
+from datetime import datetime, UTC
 
 
 def make_order(id):
     return {
         "id": id,
         "external_id": id,
-        "created_at": datetime.utcnow(),
+        "created_at": datetime.now(UTC),
         "buyer": {"name": "Flow"},
         "destination": {"zip": "99999", "city": "X", "state": "Y", "country": "US"},
         "items": [{"sku": "A", "name": "Item", "qty": 1, "weight": 1.0}],
