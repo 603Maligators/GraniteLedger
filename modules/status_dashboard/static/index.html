@@ -3,49 +3,37 @@
 <head>
   <meta charset="utf-8" />
   <title>GraniteLedger Dashboard</title>
-  <style>
-    body { font-family: sans-serif; }
-    .row { display: flex; }
-    .column { flex: 1; padding: 0 10px; }
-    .column h3 { text-align: center; }
-    .card { background: #f0f0f0; margin: 4px; padding: 4px; border-radius: 4px; }
-  </style>
-  <script>
-    async function refresh() {
-      const res = await fetch('/gl/orders');
-      const orders = await res.json();
-      const cols = {
-        'New': [], 'Printed': [], 'Addressed': [], 'Bags Pulled': [],
-        'Ship Method Chosen': [], 'Shipped': [], 'Completed': []
-      };
-      orders.forEach(o => {
-        (cols[o.status] || cols['New']).push(o);
-      });
-      for (const st in cols) {
-        const id = st.replace(/\s/g, '_');
-        const el = document.getElementById(id);
-        if (el) {
-          el.innerHTML = cols[st].map(o => `<div class="card">${o.id}</div>`).join('');
-        }
-      }
-    }
-    window.onload = () => {
-      refresh();
-      setInterval(refresh, 3000);
-    };
-  </script>
+  <link rel="stylesheet" href="/gl/ui/static/styles.css" />
 </head>
 <body>
   <h1>GraniteLedger Dashboard</h1>
-  <div class="row">
-    <div class="column" id="New"><h3>New</h3></div>
-    <div class="column" id="Printed"><h3>Printed</h3></div>
-    <div class="column" id="Addressed"><h3>Addressed</h3></div>
-    <div class="column" id="Bags_Pulled"><h3>Bags Pulled</h3></div>
-    <div class="column" id="Ship_Method_Chosen"><h3>Ship Method Chosen</h3></div>
-    <div class="column" id="Shipped"><h3>Shipped</h3></div>
-    <div class="column" id="Completed"><h3>Completed</h3></div>
+  <div id="toolbar">
+    <button id="batch-print-invoices">Print Invoices</button>
+    <button id="batch-print-labels">Print Labels</button>
+    <input id="batch-status" placeholder="Status" />
+    <button id="batch-set-status">Set Status</button>
   </div>
+  <div id="board" class="row">
+    <div class="column" data-status="New"><h3>New</h3><div class="cards"></div></div>
+    <div class="column" data-status="Printed"><h3>Printed</h3><div class="cards"></div></div>
+    <div class="column" data-status="Addressed"><h3>Addressed</h3><div class="cards"></div></div>
+    <div class="column" data-status="Bags Pulled"><h3>Bags Pulled</h3><div class="cards"></div></div>
+    <div class="column" data-status="Ship Method Chosen"><h3>Ship Method Chosen</h3><div class="cards"></div></div>
+    <div class="column" data-status="Shipped"><h3>Shipped</h3><div class="cards"></div></div>
+    <div class="column" data-status="Completed"><h3>Completed</h3><div class="cards"></div></div>
+  </div>
+
+  <div id="logs" class="log-drawer"></div>
+
+  <div id="shipping-modal" class="modal hidden">
+    <div class="modal-content">
+      <div id="shipping-options"></div>
+      <button id="shipping-approve">Approve</button>
+      <button id="shipping-close">Close</button>
+    </div>
+  </div>
+
   <script src="/gl/ui/static/app.js"></script>
 </body>
 </html>
+

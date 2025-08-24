@@ -12,16 +12,23 @@ except ModuleNotFoundError:  # pragma: no cover
 class TestKitsModule:
     def on_load(self, ctx):
         self.ctx = ctx
-        self.orders = ctx.registry.get("orders.service@1.0")
-        self.printing = ctx.registry.get("printing.service@1.0")
-        self.OrderModel = ctx.registry.get("orders.models@1.0")
         ctx.registry.bind("tests.kit@1.0", self)
+
+    def _orders_service(self):
+        return self.ctx.registry.get("orders.service@1.0")
+
+    def _printing_service(self):
+        return self.ctx.registry.get("printing.service@1.0")
+
+    def _order_model(self):
+        return self.ctx.registry.get("orders.models@1.0")
 
     def setup_routes(self, app: Any):
         @app.post("/gl/test/order")
         def test_order():
             oid = str(uuid.uuid4())
-            order = self.OrderModel(
+            Order = self._order_model()
+            order = Order(
                 id=oid,
                 external_id=oid,
                 created_at=datetime.now(UTC),
@@ -31,25 +38,25 @@ class TestKitsModule:
                 shipping_tier="Free",
                 totals={"subtotal": 10.0, "shipping": 0.0, "tax": 0.0, "grand_total": 10.0},
             )
-            self.orders.create_or_update(order, test=True)
+            self._orders_service().create_or_update(order, test=True)
             return {"id": oid}
 
         @app.post("/gl/test/print")
         def test_print():
-            orders = self.orders.list_orders()
+            orders = self._orders_service().list_orders()
             if not orders:
                 raise HTTPException(404)
             oid = orders[-1].id
-            self.printing.op_print_invoice(oid, test=True)
+            self._printing_service().op_print_invoice(oid, test=True)
             return {"id": oid}
 
         @app.post("/gl/test/ship")
         def test_ship():
-            orders = self.orders.list_orders()
+            orders = self._orders_service().list_orders()
             if not orders:
                 raise HTTPException(404)
             oid = orders[-1].id
-            self.orders.update(
+            self._orders_service().update(
                 oid,
                 {
                     "approved_shipping_method": {
@@ -60,5 +67,5 @@ class TestKitsModule:
                     }
                 },
             )
-            self.printing.op_print_label(oid, test=True)
+            self._printing_service().op_print_label(oid, test=True)
             return {"id": oid}

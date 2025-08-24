@@ -55,12 +55,17 @@ class EventsLogModule:
         ):
             events = self.list_events()
             if topic:
-                events = [e for e in events if e.get("topic") == topic]
+                events = [e for e in events if e.get("topic", "").startswith(topic)]
             if order_id:
                 events = [e for e in events if e.get("order_id") == order_id]
             if q:
                 ql = q.lower()
-                events = [e for e in events if ql in json.dumps(e).lower()]
+                events = [
+                    e
+                    for e in events
+                    if ql in (e.get("detail", "") or "").lower()
+                    or ql in (e.get("rationale", "") or "").lower()
+                ]
             if since:
                 try:
                     since_dt = datetime.fromisoformat(since)
