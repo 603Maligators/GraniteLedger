@@ -1,5 +1,5 @@
 import os
-from datetime import datetime
+from datetime import datetime, UTC
 from typing import Any
 from forgecore.admin_api import HTTPException
 
@@ -21,7 +21,7 @@ class PrintingServiceModule:
     # helpers ------------------------------------------------------------
     def _write_file(self, kind: str, oid: str, content: str) -> str:
         base = self.ctx.storage._module_dir(self.ctx.manifest["name"])  # type: ignore
-        ts = datetime.utcnow().strftime("%Y%m%d%H%M%S")
+        ts = datetime.now(UTC).strftime("%Y%m%d%H%M%S")
         path = os.path.join(base, kind, oid)
         os.makedirs(path, exist_ok=True)
         file_path = os.path.join(path, f"{ts}.txt")
@@ -45,7 +45,7 @@ class PrintingServiceModule:
             raise HTTPException(404)
         if not order.approved_shipping_method:
             raise HTTPException(400)
-        tracking = f"TRK{int(datetime.utcnow().timestamp())}"
+        tracking = f"TRK{int(datetime.now(UTC).timestamp())}"
         path = self._write_file("labels", oid, f"Label {tracking}")
         self.service.update(oid, {"tracking_number": tracking})
         self.ctx.event_bus.publish("order.label.purchased", {"order_id": oid, "detail": tracking, "test": test})
@@ -71,7 +71,7 @@ class PrintingServiceModule:
         if not order or not order.tracking_number:
             raise HTTPException(404)
         self.ctx.event_bus.publish("order.label.voided", {"order_id": oid, "detail": order.tracking_number, "test": test})
-        tracking = f"TRK{int(datetime.utcnow().timestamp())}R"
+        tracking = f"TRK{int(datetime.now(UTC).timestamp())}R"
         path = self._write_file("labels", oid, f"Label {tracking}")
         self.service.update(oid, {"tracking_number": tracking})
         self.ctx.event_bus.publish("order.label.purchased", {"order_id": oid, "detail": tracking, "test": test})

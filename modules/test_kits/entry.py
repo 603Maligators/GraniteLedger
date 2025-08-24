@@ -1,6 +1,6 @@
 import uuid
 from typing import Any
-from datetime import datetime
+from datetime import datetime, UTC
 from forgecore.admin_api import HTTPException
 
 try:
@@ -24,7 +24,7 @@ class TestKitsModule:
             order = self.OrderModel(
                 id=oid,
                 external_id=oid,
-                created_at=datetime.utcnow(),
+                created_at=datetime.now(UTC),
                 buyer={"name": "Test Buyer"},
                 destination={"zip": "99999", "city": "X", "state": "YY", "country": "US"},
                 items=[{"sku": "SKU1", "name": "Item", "qty": 1, "weight": 1.0}],
@@ -49,6 +49,16 @@ class TestKitsModule:
             if not orders:
                 raise HTTPException(404)
             oid = orders[-1].id
-            self.orders.update(oid, {"approved_shipping_method": {"carrier": "USPS", "service": "Ground", "cost": 5.0, "eta_days": 5}})
+            self.orders.update(
+                oid,
+                {
+                    "approved_shipping_method": {
+                        "carrier": "USPS",
+                        "service": "Ground",
+                        "cost": 5.0,
+                        "eta_days": 5,
+                    }
+                },
+            )
             self.printing.op_print_label(oid, test=True)
             return {"id": oid}

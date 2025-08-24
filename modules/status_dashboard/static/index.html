@@ -1,5 +1,50 @@
 <!DOCTYPE html>
-<html><body>
-<h1>GraniteLedger Dashboard</h1>
-<p>Minimal placeholder UI.</p>
-</body></html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>GraniteLedger Dashboard</title>
+  <style>
+    body { font-family: sans-serif; }
+    .row { display: flex; }
+    .column { flex: 1; padding: 0 10px; }
+    .column h3 { text-align: center; }
+    .card { background: #f0f0f0; margin: 4px; padding: 4px; border-radius: 4px; }
+  </style>
+  <script>
+    async function refresh() {
+      const res = await fetch('/gl/orders');
+      const orders = await res.json();
+      const cols = {
+        'New': [], 'Printed': [], 'Addressed': [], 'Bags Pulled': [],
+        'Ship Method Chosen': [], 'Shipped': [], 'Completed': []
+      };
+      orders.forEach(o => {
+        (cols[o.status] || cols['New']).push(o);
+      });
+      for (const st in cols) {
+        const id = st.replace(/\s/g, '_');
+        const el = document.getElementById(id);
+        if (el) {
+          el.innerHTML = cols[st].map(o => `<div class="card">${o.id}</div>`).join('');
+        }
+      }
+    }
+    window.onload = () => {
+      refresh();
+      setInterval(refresh, 3000);
+    };
+  </script>
+</head>
+<body>
+  <h1>GraniteLedger Dashboard</h1>
+  <div class="row">
+    <div class="column" id="New"><h3>New</h3></div>
+    <div class="column" id="Printed"><h3>Printed</h3></div>
+    <div class="column" id="Addressed"><h3>Addressed</h3></div>
+    <div class="column" id="Bags_Pulled"><h3>Bags Pulled</h3></div>
+    <div class="column" id="Ship_Method_Chosen"><h3>Ship Method Chosen</h3></div>
+    <div class="column" id="Shipped"><h3>Shipped</h3></div>
+    <div class="column" id="Completed"><h3>Completed</h3></div>
+  </div>
+</body>
+</html>

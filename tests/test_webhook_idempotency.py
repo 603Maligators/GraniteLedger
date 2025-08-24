@@ -1,8 +1,8 @@
-from datetime import datetime
+from datetime import datetime, UTC
 
 payload = {
     "id": "ext1",
-    "created_at": datetime.utcnow(),
+    "created_at": datetime.now(UTC),
     "buyer": {"name": "Webhook"},
     "destination": {"zip": "99999", "city": "X", "state": "Y", "country": "US"},
     "items": [{"sku": "A", "name": "Item", "qty": 1, "weight": 1.0}],

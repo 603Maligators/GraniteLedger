@@ -27,7 +27,7 @@ class ShippingRulesModule:
         return round(total + 0.5, 2)
 
     def shipping_options(self, order: Dict) -> List[Dict]:
-        # deterministic stub options
+        # deterministic shipping options
         return [
             {"carrier": "USPS", "service": "Ground", "cost": 5.0, "eta_days": 5},
             {"carrier": "UPS", "service": "Ground", "cost": 5.2, "eta_days": 3},
