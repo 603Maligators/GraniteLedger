@@ -1,7 +1,5 @@
 from datetime import datetime, UTC
 from typing import Any
-import json
-from forgecore.admin_api import HTTPException
 
 try:
     from fastapi import FastAPI
@@ -45,7 +43,7 @@ class EventsLogModule:
     def list_events(self):
         return list(self.events)
 
-    def setup_routes(self, app: Any):
+    def setup_routes(self, app: FastAPI):
         @app.get("/gl/logs")
         def get_logs(
             topic: str | None = None,
