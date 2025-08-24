@@ -90,7 +90,11 @@ class ShippingRulesModule:
             self.service.update(oid, changed)
             self.ctx.event_bus.publish(
                 "order.shipping.selected",
-                {"order_id": oid, "method": method},
+                {
+                    "order_id": oid,
+                    "method": method,
+                    "rationale": method.get("rationale"),
+                },
             )
 
     # routes -------------------------------------------------------------
@@ -120,7 +124,12 @@ class ShippingRulesModule:
                 raise HTTPException(400)
             self.service.update(oid, {"approved_shipping_method": method})
             self.ctx.event_bus.publish(
-                "order.shipping.approved", {"order_id": oid, "method": method}
+                "order.shipping.approved",
+                {
+                    "order_id": oid,
+                    "method": method,
+                    "rationale": method.get("rationale"),
+                },
             )
             self.service.change_status(oid, "Ship Method Chosen")
             return method
