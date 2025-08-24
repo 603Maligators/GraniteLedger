@@ -100,7 +100,14 @@ class ShippingRulesModule:
             order = self.service.get(oid)
             if not order:
                 raise HTTPException(404)
-            opts = self.shipping_options(order.dict())[:2]
+            data = order.dict()
+            opts = self.shipping_options(data)[:2]
+            chosen = self.choose_method(data)
+            for o in opts:
+                if o["carrier"] == chosen.get("carrier") and o["service"] == chosen.get("service"):
+                    o["rationale"] = chosen.get("rationale")
+                else:
+                    o["rationale"] = ""
             return opts
 
         @app.post("/gl/orders/{oid}/shipping/approve")

@@ -3,7 +3,7 @@ from forgecore.admin_api import HTTPException
 try:
     from fastapi import FastAPI
 except ModuleNotFoundError:  # pragma: no cover
-    from mini_fastapi import FastAPI
+    from mini_fastapi import FastAPI  # type: ignore
 
 import os, sys
 sys.path.append(os.path.dirname(__file__))
@@ -48,6 +48,18 @@ class OrdersCoreModule:
             if not order:
                 raise HTTPException(404)
             return order.dict()
+
+        @app.post("/gl/orders/batch/status/{status}")
+        def batch_status(status: str, ids: list[str]):
+            results = []
+            for oid in ids:
+                try:
+                    order = self.service.change_status(oid, status)
+                except ValueError:
+                    continue
+                if order:
+                    results.append(order.dict())
+            return results
 
         @app.post("/gl/orders/{oid}/status/{status}")
         def change_status(oid: str, status: str):

@@ -6,7 +6,7 @@ from forgecore.admin_api import HTTPException
 try:
     from fastapi import FastAPI
 except ModuleNotFoundError:  # pragma: no cover
-    from mini_fastapi import FastAPI
+    from mini_fastapi import FastAPI  # type: ignore
 
 
 class PrintingServiceModule:
@@ -80,6 +80,20 @@ class PrintingServiceModule:
 
     # API ---------------------------------------------------------------
     def setup_routes(self, app: Any):
+        @app.post("/gl/orders/batch/print/invoices")
+        def r_batch_print_invoices(ids: list[str]):
+            return [self.op_print_invoice(oid) for oid in ids]
+
+        @app.post("/gl/orders/batch/print/labels")
+        def r_batch_print_labels(ids: list[str]):
+            results = []
+            for oid in ids:
+                try:
+                    results.append(self.op_print_label(oid))
+                except HTTPException:
+                    continue
+            return results
+
         @app.post("/gl/orders/{oid}/print/invoice")
         def r_print_invoice(oid: str):
             return self.op_print_invoice(oid)
