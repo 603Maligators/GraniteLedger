@@ -1,5 +1,5 @@
-from typing import Any, Dict, List
-from datetime import datetime
+from typing import Dict, List
+
 from forgecore.admin_api import HTTPException
 from modules.orders_core.models import ShipMethod
 
@@ -27,13 +27,21 @@ class ShippingRulesModule:
             total += it.get("weight", 0) * it.get("qty", 1)
         return round(total + 0.5, 2)
 
-    def shipping_options(self, order: Dict) -> List[Dict]:
+    def shipping_options(self, order: Dict) -> List[ShipMethod]:
         # deterministic shipping options
         return [
-            {"carrier": "USPS", "service": "Ground", "cost": 5.0, "eta_days": 5},
-            {"carrier": "UPS", "service": "Ground", "cost": 5.2, "eta_days": 3},
-            {"carrier": "USPS", "service": "Priority", "cost": 8.0, "eta_days": 2},
-            {"carrier": "Home", "service": "Delivery", "cost": 7.0, "eta_days": 4},
+            ShipMethod.model_validate(
+                {"carrier": "USPS", "service": "Ground", "cost": 5.0, "eta_days": 5, "rationale": ""}
+            ),
+            ShipMethod.model_validate(
+                {"carrier": "UPS", "service": "Ground", "cost": 5.2, "eta_days": 3, "rationale": ""}
+            ),
+            ShipMethod.model_validate(
+                {"carrier": "USPS", "service": "Priority", "cost": 8.0, "eta_days": 2, "rationale": ""}
+            ),
+            ShipMethod.model_validate(
+                {"carrier": "Home", "service": "Delivery", "cost": 7.0, "eta_days": 4, "rationale": ""}
+            ),
         ]
 
     def choose_method(self, order: Dict) -> ShipMethod:
@@ -66,16 +74,16 @@ class ShippingRulesModule:
                 "rationale": "priority",
             })
         if tier == "Free":
-            opts = sorted(options[:2], key=lambda o: o["cost"])
+            opts = sorted(options[:2], key=lambda o: o.cost)
             cheapest = opts[0]
             candidate = opts[1]
-            if candidate["cost"] - cheapest["cost"] < 0.3 and candidate["eta_days"] < cheapest["eta_days"]:
+            if candidate.cost - cheapest.cost < 0.3 and candidate.eta_days < cheapest.eta_days:
                 chosen = candidate
                 rationale = "faster within $0.30"
             else:
                 chosen = cheapest
                 rationale = "cheapest"
-            chosen = dict(chosen)
+            chosen = chosen.model_dump(mode="json")
             chosen["rationale"] = rationale
             return ShipMethod.model_validate(chosen)
         # default
@@ -97,7 +105,7 @@ class ShippingRulesModule:
         changed = {}
         if order.get("computed_weight") != weight:
             changed["computed_weight"] = weight
-        if order.get("proposed_shipping_method") != method.model_dump(mode="python"):
+        if order.get("proposed_shipping_method") != method.model_dump(mode="json"):
             changed["proposed_shipping_method"] = method
         if changed:
             self.service.update(oid, changed)
@@ -107,14 +115,14 @@ class ShippingRulesModule:
             )
 
     # routes -------------------------------------------------------------
-    def setup_routes(self, app: Any):
+    def setup_routes(self, app: FastAPI):
         @app.get("/gl/orders/{oid}/shipping/options")
         def options(oid: str):
             order = self.service.get(oid)
             if not order:
                 raise HTTPException(404)
             data = order.model_dump()
-            opts = self.shipping_options(data)[:2]
+            opts = [m.model_dump(mode="json") for m in self.shipping_options(data)[:2]]
             chosen = self.choose_method(data)
             for o in opts:
                 if o["carrier"] == chosen.carrier and o["service"] == chosen.service:
@@ -136,4 +144,4 @@ class ShippingRulesModule:
                 "order.shipping.approved", {"order_id": oid, "method": method.model_dump(mode="json")}
             )
             self.service.change_status(oid, "Ship Method Chosen")
-            return method
+            return method.model_dump(mode="json")
