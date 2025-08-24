@@ -12,9 +12,6 @@ def build_app():
     rt = create_runtime("modules")
     rt.start()
     app = create_app(rt)
-    for state in rt.loader.modules.values():
-        if hasattr(state.instance, "setup_routes"):
-            state.instance.setup_routes(app)
     return app, rt
 
 

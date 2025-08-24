@@ -28,6 +28,7 @@ class TestKitsModule:
         def test_order():
             oid = str(uuid.uuid4())
             Order = self._order_model()
+            orders_service = self._orders_service()
             order = Order(
                 id=oid,
                 external_id=oid,
@@ -38,25 +39,29 @@ class TestKitsModule:
                 shipping_tier="Free",
                 totals={"subtotal": 10.0, "shipping": 0.0, "tax": 0.0, "grand_total": 10.0},
             )
-            self._orders_service().create_or_update(order, test=True)
+            orders_service.create_or_update(order, test=True)
             return {"id": oid}
 
         @app.post("/gl/test/print")
         def test_print():
-            orders = self._orders_service().list_orders()
+            orders_service = self._orders_service()
+            printing_service = self._printing_service()
+            orders = orders_service.list_orders()
             if not orders:
                 raise HTTPException(404)
             oid = orders[-1].id
-            self._printing_service().op_print_invoice(oid, test=True)
+            printing_service.op_print_invoice(oid, test=True)
             return {"id": oid}
 
         @app.post("/gl/test/ship")
         def test_ship():
-            orders = self._orders_service().list_orders()
+            orders_service = self._orders_service()
+            printing_service = self._printing_service()
+            orders = orders_service.list_orders()
             if not orders:
                 raise HTTPException(404)
             oid = orders[-1].id
-            self._orders_service().update(
+            orders_service.update(
                 oid,
                 {
                     "approved_shipping_method": {
@@ -67,5 +72,5 @@ class TestKitsModule:
                     }
                 },
             )
-            self._printing_service().op_print_label(oid, test=True)
+            printing_service.op_print_label(oid, test=True)
             return {"id": oid}
