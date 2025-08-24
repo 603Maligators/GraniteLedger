@@ -69,6 +69,11 @@ def create_app(runtime: ForgeRuntime):
         graph = runtime.loader.dependency_graph()
         return {"graph": graph}
 
+    # mount routers from enabled modules
+    for state in runtime.loader.modules.values():
+        if state.enabled and hasattr(state.instance, "setup_routes"):
+            state.instance.setup_routes(app)
+
     return app
 
 
