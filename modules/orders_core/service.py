@@ -1,5 +1,5 @@
 from __future__ import annotations
-from datetime import datetime
+from datetime import datetime, UTC
 from typing import Dict, List, Optional
 import os, sys
 sys.path.append(os.path.dirname(__file__))
@@ -71,7 +71,7 @@ class OrderService:
         else:
             self.external[order.external_id] = order.id if order.external_id else order.id
         order.history.append({
-            "ts": datetime.utcnow(),
+            "ts": datetime.now(UTC),
             "event": "order.received",
             "detail": "test" if test else "received",
         })
@@ -87,7 +87,7 @@ class OrderService:
         for k, v in data.items():
             setattr(order, k, v)
         order.history.append({
-            "ts": datetime.utcnow(),
+            "ts": datetime.now(UTC),
             "event": "order.updated",
             "detail": "updated",
         })
@@ -105,7 +105,7 @@ class OrderService:
             raise ValueError("illegal transition")
         order.status = new_status
         order.history.append({
-            "ts": datetime.utcnow(),
+            "ts": datetime.now(UTC),
             "event": "order.status.changed",
             "detail": new_status,
         })

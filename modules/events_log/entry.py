@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, UTC
 from typing import Any
 from forgecore.admin_api import HTTPException
 
@@ -32,7 +32,7 @@ class EventsLogModule:
 
     def _handle(self, topic: str, payload: Any):
         rec = {
-            "ts": datetime.utcnow().isoformat(),
+            "ts": datetime.now(UTC).isoformat(),
             "topic": topic,
             "order_id": payload.get("order_id"),
             "detail": payload.get("detail"),
