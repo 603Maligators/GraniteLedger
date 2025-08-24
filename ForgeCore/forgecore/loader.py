@@ -1,4 +1,5 @@
 import importlib
+import importlib.util
 import json
 import logging
 import os
@@ -56,10 +57,12 @@ class ModuleLoader:
 
     def _load_entry(self, module_path: str, spec: str) -> Any:
         mod_name, _, cls_name = spec.partition(":")
-        module = importlib.machinery.SourceFileLoader(
-            mod_name,
-            os.path.join(module_path, mod_name + ".py"),
-        ).load_module()
+        spec = importlib.util.spec_from_file_location(
+            mod_name, os.path.join(module_path, mod_name + ".py")
+        )
+        module = importlib.util.module_from_spec(spec)
+        assert spec and spec.loader
+        spec.loader.exec_module(module)  # type: ignore[attr-defined]
         cls = getattr(module, cls_name)
         return cls()
 
