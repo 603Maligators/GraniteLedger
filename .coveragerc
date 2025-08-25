@@ -1,0 +1,16 @@
+[run]
+branch = True
+omit =
+    tests/*
+    ForgeCore/forgecore/tests/*
+    */__init__.py
+
+[report]
+show_missing = True
+skip_covered = False
+
+[xml]
+output = reports/coverage/coverage.xml
+
+[html]
+directory = reports/coverage/html

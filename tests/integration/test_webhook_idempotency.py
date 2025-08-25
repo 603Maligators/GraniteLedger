@@ -1,3 +1,4 @@
+import pytest
 from datetime import datetime, UTC
 
 payload = {
@@ -11,6 +12,7 @@ payload = {
 }
 
 
+@pytest.mark.integration
 def test_idempotent_webhook(volusion, orders):
     volusion.ingest_payload(payload)
     volusion.ingest_payload(payload)

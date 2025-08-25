@@ -1,3 +1,4 @@
+import pytest
 from datetime import datetime, UTC
 
 
@@ -14,6 +15,7 @@ def make_order(id, tier, zip_code, weight=1.0):
     }
 
 
+@pytest.mark.integration
 def test_weight_and_free_rule(orders, order_model):
     order = order_model(**make_order("1", "Free", "99999"))
     orders.create_or_update(order)
@@ -22,6 +24,7 @@ def test_weight_and_free_rule(orders, order_model):
     assert data["proposed_shipping_method"]["carrier"] == "UPS"
 
 
+@pytest.mark.integration
 def test_zip_override(orders, order_model):
     order = order_model(**make_order("2", "Free", "03224"))
     orders.create_or_update(order)
@@ -29,6 +32,7 @@ def test_zip_override(orders, order_model):
     assert data["proposed_shipping_method"]["carrier"] == "Home"
 
 
+@pytest.mark.integration
 def test_priority_zip_override(orders, order_model):
     order = order_model(**make_order("3", "Priority", "03224"))
     orders.create_or_update(order)

@@ -1,0 +1,44 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "GraniteLedger"
+version = "0.1.0"
+requires-python = ">=3.8"
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.4",
+    "pytest-cov>=4.1",
+    "pytest-benchmark>=4.0",
+    "hypothesis>=6.0",
+    "coverage>=7.0",
+    "ruff>=0.1.8",
+    "mypy>=1.5",
+    "bandit>=1.7",
+    "pip-audit>=2.4",
+    "mutmut>=2.4",
+    "cyclonedx-bom>=3.11",
+    "freezegun>=1.2",
+]
+
+[tool.pytest.ini_options]
+addopts = "-ra"
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py38"
+
+[tool.mypy]
+python_version = "3.8"
+ignore_missing_imports = true
+
+[tool.bandit]
+skips = ["B101"]
+
+[tool.mutmut]
+paths_to_mutate = ["modules", "ForgeCore/forgecore"]
+backup = false
+runner = "python"
