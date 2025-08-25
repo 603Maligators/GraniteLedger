@@ -1,0 +1,228 @@
+# TEST_PLAN
+
+## 0. Auto-Detected Stack
+- **Languages:** Python
+- **Frameworks:** Custom ForgeCore runtime, Mini FastAPI
+- **Testing Tools:** pytest, hypothesis, coverage.py, pytest-benchmark, ruff, mypy, bandit, pip-audit, mutmut, gitleaks, CycloneDX SBOM
+
+## 1. Module Map
+- `ForgeCore/forgecore/__init__.py`:
+- `ForgeCore/forgecore/admin_api.py`:
+  - class `Response` (L11)
+    - method `__init__` (L12)
+    - method `json` (L16)
+  - function `create_app` (L20)
+- `ForgeCore/forgecore/capabilities.py`:
+  - class `Provider` (L9)
+  - class `CapabilityRegistry` (L15)
+    - method `__init__` (L18)
+    - method `bind` (L23)
+    - method `unbind` (L30)
+    - method `get` (L35)
+    - method `snapshot` (L67)
+- `ForgeCore/forgecore/cli/forge.py`:
+  - function `main` (L9)
+  - function `start` (L17)
+- `ForgeCore/forgecore/event_bus.py`:
+  - class `EventBus` (L7)
+    - method `__init__` (L10)
+    - method `subscribe` (L15)
+    - method `publish` (L26)
+- `ForgeCore/forgecore/examples/basic_module/entry.py`:
+  - class `Module` (L1)
+    - method `on_load` (L2)
+    - method `handle` (L7)
+    - method `on_enable` (L10)
+    - method `on_disable` (L13)
+- `ForgeCore/forgecore/examples/rpg_inventory/entry.py`:
+  - class `Module` (L1)
+    - method `on_load` (L2)
+    - method `on_enable` (L6)
+- `ForgeCore/forgecore/loader.py`:
+  - class `ModuleContext` (L15)
+  - class `ModuleState` (L25)
+  - class `ModuleLoader` (L35)
+    - method `__init__` (L36)
+    - method `discover` (L46)
+    - method `_read_manifest` (L54)
+    - method `_load_entry` (L58)
+    - method `load_all` (L69)
+    - method `enable_all` (L97)
+    - method `enable_module` (L102)
+    - method `disable_all` (L111)
+    - method `disable_module` (L116)
+    - method `_dependency_order` (L123)
+    - method `dependency_graph` (L154)
+- `ForgeCore/forgecore/runtime.py`:
+  - class `ForgeRuntime` (L14)
+    - method `__init__` (L17)
+    - method `start` (L26)
+    - method `stop` (L34)
+  - function `get_runtime` (L42)
+  - function `create_runtime` (L48)
+- `ForgeCore/forgecore/storage.py`:
+  - class `StorageManager` (L7)
+    - method `__init__` (L10)
+    - method `_module_dir` (L14)
+    - method `store` (L19)
+    - method `load` (L27)
+    - method `delete` (L34)
+    - method `list_keys` (L39)
+- `ForgeCore/forgecore/tests/conftest.py`:
+- `ForgeCore/forgecore/tests/test_admin_api.py`:
+  - function `runtime_client` (L16)
+  - function `test_api_modules_list_and_details` (L26)
+  - function `test_api_storage_round_trip` (L38)
+  - function `test_api_validate_returns_graph` (L49)
+- `ForgeCore/forgecore/tests/test_capabilities.py`:
+  - class `Prov` (L4)
+    - method `__init__` (L5)
+  - function `test_resolution_semver` (L9)
+- `ForgeCore/forgecore/tests/test_event_bus.py`:
+  - function `test_publish_subscribe_isolation` (L4)
+- `ForgeCore/forgecore/tests/test_loader.py`:
+  - function `test_module_loader_lifecycle_and_ordering` (L5)
+- `ForgeCore/forgecore/tests/test_storage.py`:
+  - function `test_storage_manager_atomic_json` (L4)
+- `ForgeCore/forgecore/watcher.py`:
+  - class `DummyWatcher` (L1)
+    - method `start` (L2)
+    - method `stop` (L5)
+- `ForgeCore/mini_fastapi/__init__.py`:
+- `ForgeCore/mini_fastapi/app.py`:
+  - class `HTTPException` (L4)
+    - method `__init__` (L5)
+  - class `FastAPI` (L9)
+    - method `__init__` (L10)
+    - method `_register` (L13)
+    - method `get` (L18)
+    - method `post` (L23)
+    - method `put` (L28)
+    - method `delete` (L33)
+    - method `_match` (L38)
+    - method `handle` (L56)
+- `ForgeCore/mini_fastapi/testclient.py`:
+  - class `TestClient` (L7)
+    - method `__init__` (L8)
+    - method `request` (L12)
+    - method `get` (L21)
+    - method `post` (L24)
+    - method `put` (L27)
+    - method `delete` (L30)
+- `ForgeCore/setup.py`:
+- `modules/events_log/entry.py`:
+  - class `EventsLogModule` (L23)
+    - method `on_load` (L24)
+    - method `_handle` (L32)
+    - method `list_events` (L43)
+    - method `setup_routes` (L46)
+- `modules/orders_core/entry.py`:
+  - class `OrdersCoreModule` (L15)
+    - method `on_load` (L16)
+    - method `on_enable` (L20)
+    - method `setup_routes` (L28)
+- `modules/orders_core/models.py`:
+  - class `Buyer` (L13)
+  - class `Destination` (L18)
+  - class `Item` (L25)
+  - class `ShipMethod` (L32)
+  - class `MoneyTotals` (L40)
+  - class `HistoryEntry` (L47)
+  - class `Order` (L53)
+- `modules/orders_core/service.py`:
+  - class `OrderService` (L30)
+    - method `__init__` (L31)
+    - method `_save_index` (L40)
+    - method `_store_order` (L44)
+    - method `_load_order` (L50)
+    - method `list_orders` (L57)
+    - method `get` (L60)
+    - method `create_or_update` (L63)
+    - method `update` (L85)
+    - method `change_status` (L104)
+- `modules/printing_service/entry.py`:
+  - class `PrintingServiceModule` (L12)
+    - method `on_load` (L13)
+    - method `on_enable` (L18)
+    - method `_write_file` (L22)
+    - method `op_print_invoice` (L33)
+    - method `op_print_label` (L42)
+    - method `op_reprint_invoice` (L56)
+    - method `op_reprint_label` (L61)
+    - method `op_void_rebuy` (L69)
+    - method `setup_routes` (L82)
+- `modules/shipping_rules/entry.py`:
+  - class `ShippingRulesModule` (L12)
+    - method `on_load` (L13)
+    - method `on_enable` (L20)
+    - method `compute_weight` (L24)
+    - method `shipping_options` (L30)
+    - method `choose_method` (L47)
+    - method `handle` (L98)
+    - method `setup_routes` (L118)
+- `modules/status_dashboard/entry.py`:
+  - class `DashboardModule` (L19)
+    - method `on_load` (L20)
+    - method `setup_routes` (L24)
+- `modules/test_kits/entry.py`:
+  - class `TestKitsModule` (L12)
+    - method `on_load` (L13)
+    - method `_orders_service` (L17)
+    - method `_printing_service` (L20)
+    - method `_order_model` (L23)
+    - method `setup_routes` (L26)
+- `modules/volusion_webhook/entry.py`:
+  - class `VolusionWebhookModule` (L14)
+    - method `on_load` (L15)
+    - method `on_enable` (L22)
+    - method `on_completed` (L26)
+    - method `ingest_payload` (L37)
+    - method `setup_routes` (L43)
+- `modules/volusion_webhook/normalizer.py`:
+  - function `normalize` (L1)
+- `run.py`:
+  - function `build_app` (L11)
+- `tests/conftest.py`:
+  - function `runtime` (L13)
+  - function `orders` (L22)
+  - function `printing` (L27)
+  - function `events` (L32)
+  - function `order_model` (L37)
+  - function `volusion` (L42)
+- `tests/test_order_flow.py`:
+  - function `make_order` (L4)
+  - function `test_full_flow` (L17)
+- `tests/test_shipping_rules.py`:
+  - function `make_order` (L4)
+  - function `test_weight_and_free_rule` (L17)
+  - function `test_zip_override` (L25)
+  - function `test_priority_zip_override` (L32)
+- `tests/test_webhook_idempotency.py`:
+  - function `test_idempotent_webhook` (L14)
+
+## 2. Unit Test Requirements
+- Exercise happy paths, boundary values, invalid inputs, and exception cases for every function and method.
+- Isolate I/O, filesystem, and network via fixtures and mocks.
+- Property tests and metamorphic scenarios where appropriate (e.g., round-trip serialization).
+
+## 3. Integration & E2E
+- Validate workflows across modules such as order creation, shipping rule evaluation, and webhook ingestion.
+- Replace external dependencies with doubles; validate CLI/API contracts and JSON schemas.
+- Include idempotency checks and pagination tests where applicable.
+
+## 4. Cross-Cutting Concerns
+- Performance micro-benchmarks using `pytest-benchmark` for hot paths (e.g., order service lookups).
+- Fuzzing targets for input parsers like `volusion_webhook.normalizer.normalize` with capped runtimes.
+- Mutation testing aiming for ≥60% score initially.
+- Security scans: dependency audit, secrets detection, static analysis.
+
+## 5. Coverage & Quality Gates
+- Line coverage ≥90%, branch coverage ≥80%; failures on regression.
+- Flaky tests rerun up to three times before marking as flaky.
+
+## 6. Determinism & State
+- Use temporary directories, frozen time, and seeded RNG to avoid global state leaks.
+- Provide test doubles for external services; enable live tests only via environment flags.
+
+## 7. Constraints & Untestable
+- Components interacting with opaque external services are marked **UNTESTABLE** with suggested seams for injection.

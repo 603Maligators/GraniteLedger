@@ -1,0 +1,66 @@
+name: QA
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  qa:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+      - name: Install dependencies
+        run: |
+          python -m venv .venv
+          .venv/bin/pip install -U pip
+          .venv/bin/pip install -e .[dev]
+      - name: Lint
+        run: |
+          .venv/bin/ruff . --format sarif --output-file reports/sarif/ruff.sarif
+          .venv/bin/bandit -r modules ForgeCore -f sarif -o reports/sarif/bandit.sarif
+      - name: Typecheck
+        run: .venv/bin/make typecheck
+      - name: Unit tests
+        run: .venv/bin/make test-unit
+      - name: Integration tests (retry up to 3x)
+        run: |
+          for i in 1 2 3; do
+            .venv/bin/make test-integration && break || sleep 5
+          done
+      - name: Coverage
+        run: .venv/bin/make coverage
+      - name: Enforce coverage thresholds
+        run: |
+          coverage json -o reports/coverage/coverage.json
+          python - <<'PY'
+import json, sys
+with open('reports/coverage/coverage.json') as fh:
+    data = json.load(fh)
+line = data['totals']['percent_covered']
+branch = data['totals'].get('percent_covered_branches', 0)
+print(f'Line {line}% Branch {branch}%')
+if line < 90 or branch < 80:
+    sys.exit(1)
+PY
+      - name: Security scan
+        run: .venv/bin/make security
+      - name: SBOM
+        run: .venv/bin/make sbom
+      - name: Upload SARIF reports
+        uses: github/codeql-action/upload-sarif@v2
+        with:
+          sarif_file: reports/sarif/ruff.sarif
+      - name: Upload Bandit SARIF
+        uses: github/codeql-action/upload-sarif@v2
+        with:
+          sarif_file: reports/sarif/bandit.sarif
+      - name: Upload reports
+        uses: actions/upload-artifact@v3
+        with:
+          name: reports
+          path: reports

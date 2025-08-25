@@ -1,3 +1,4 @@
+import pytest
 from datetime import datetime, UTC
 
 
@@ -14,6 +15,7 @@ def make_order(id):
     }
 
 
+@pytest.mark.integration
 def test_full_flow(orders, order_model, printing, events, runtime):
     order = order_model(**make_order("x1"))
     orders.create_or_update(order)
